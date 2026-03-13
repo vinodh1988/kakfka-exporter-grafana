@@ -3,7 +3,6 @@ version: "2.4"
 services:
   kafka-1:
     image: public.ecr.aws/bitnami/kafka:3.7.0
-    container_name: kafka-1
     hostname: kafka-1
     ports:
       - "19092:9092"
@@ -28,7 +27,6 @@ services:
 
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.8.0
-    container_name: kafka-exporter
     command:
       - --kafka.server=kafka-1:9092
       - --web.listen-address=:9308
@@ -44,7 +42,6 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.54.1
-    container_name: prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --web.enable-lifecycle
@@ -61,7 +58,6 @@ services:
 
   grafana:
     image: grafana/grafana:11.1.4
-    container_name: grafana
     ports:
       - "3000:3000"
     environment:

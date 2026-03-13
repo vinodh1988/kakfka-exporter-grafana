@@ -92,6 +92,12 @@ Use:
 docker compose -f docker-compose.3broker-capped.yml up -d
 ```
 
+Legacy-only host (`docker-compose` v1):
+
+```bash
+docker-compose -f docker-compose.3broker-capped.v1.yml up -d
+```
+
 What this mode changes:
 - 3 brokers kept for multi-node POC
 - Broker heap capped to `-Xms256m -Xmx384m`
@@ -101,6 +107,14 @@ What this mode changes:
 Important caveat:
 - This is a best-effort fit for 4 GB and can still become unstable under high topic/partition count or heavy producer traffic.
 - If VM starts lagging, use `docker-compose.low-resource.yml` for reliable demo behavior.
+
+Verify Kafka Exporter is included in the stack file:
+
+```bash
+docker-compose -f docker-compose.3broker-capped.v1.yml config --services
+```
+
+You should see `kafka-exporter` in the output.
 
 ## Image Registry Note (Important)
 
@@ -275,6 +289,20 @@ docker compose version
 docker-compose -f docker-compose.low-resource.v1.yml down -v --remove-orphans
 docker-compose -f docker-compose.low-resource.v1.yml up -d --force-recreate
 ```
+
+- Legacy `docker-compose==1.29.2` traceback with `KeyError: 'ContainerConfig'`:
+  - This is a known v1 compose recreate-path bug.
+  - Run a hard cleanup once, then start with a unique project name:
+
+```bash
+docker-compose -f docker-compose.low-resource.v1.yml down -v --remove-orphans || true
+docker rm -f kafka-1 kafka-2 kafka-3 kafka-exporter prometheus grafana 2>/dev/null || true
+docker volume rm kafka_1_data kafka_2_data kafka_3_data 2>/dev/null || true
+docker network rm kafka-grafana-project_observability 2>/dev/null || true
+docker-compose -p kafka_poc_v1 -f docker-compose.low-resource.v1.yml up -d --force-recreate
+```
+
+  - If your shell does not support `|| true`, run each command separately and ignore "No such" errors.
 
 ## Notes
 
