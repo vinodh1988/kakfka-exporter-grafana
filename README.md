@@ -68,6 +68,12 @@ Run:
 docker compose -f docker-compose.low-resource.yml up -d
 ```
 
+If your host only supports legacy `docker-compose`, use the v1-compatible file:
+
+```powershell
+docker-compose -f docker-compose.low-resource.v1.yml up -d
+```
+
 What is reduced:
 - Kafka brokers: 3 -> 1
 - Kafka JVM heap capped (`-Xms256m -Xmx512m`)
@@ -235,6 +241,40 @@ sum by (consumergroup, topic) (kafka_consumergroup_lag)
   - Validate query in Prometheus expression browser.
 - Remote Prometheus cannot scrape exporter:
   - Check network/firewall for `9308` from remote Prometheus host.
+
+- Error: `ContainerConfig` when running compose:
+  - This is usually a Docker Compose client/stale container metadata issue.
+  - If your host supports `docker compose`, prefer it. If not, use the legacy-compatible file and `docker-compose` commands shown below.
+  - Clean old containers for this stack and recreate:
+
+```powershell
+docker compose -f docker-compose.low-resource.yml down --remove-orphans
+docker compose -f docker-compose.low-resource.yml up -d --force-recreate
+```
+
+  - If still failing, remove stale named volume and recreate (POC data will reset):
+
+```powershell
+docker compose -f docker-compose.low-resource.yml down -v --remove-orphans
+docker compose -f docker-compose.low-resource.yml up -d
+```
+
+  - Verify compose version:
+
+```powershell
+docker compose version
+```
+
+  - If the command is not found, Docker Compose v2 plugin is missing on that host.
+
+- Legacy-only host (`docker-compose` available, `docker compose` unavailable):
+  - Use `docker-compose.low-resource.v1.yml`.
+  - Remove old stack metadata before first run:
+
+```powershell
+docker-compose -f docker-compose.low-resource.v1.yml down -v --remove-orphans
+docker-compose -f docker-compose.low-resource.v1.yml up -d --force-recreate
+```
 
 ## Notes
 
