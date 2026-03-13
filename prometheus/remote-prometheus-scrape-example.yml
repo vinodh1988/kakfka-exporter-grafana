@@ -1,0 +1,13 @@
+# Merge this scrape job into your REMOTE Prometheus server config.
+# If your remote Prometheus can reach this Docker host directly, use host IP and port 9308.
+# If it runs in the same Docker network, you can use kafka-exporter:9308.
+
+scrape_configs:
+  - job_name: kafka_exporter_remote
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - <docker-host-or-dns>:9308
+    relabel_configs:
+      - target_label: cluster
+        replacement: poc-kafka-cluster
