@@ -45,6 +45,15 @@ Kafka(3 brokers) -> Kafka Exporter -> Prometheus -> Grafana
 - Docker Desktop (Windows)
 - Docker Compose v2
 
+## Image Registry Note (Important)
+
+Bitnami Kafka tags on Docker Hub may return `manifest unknown` for some versions/tags.
+This POC uses the Bitnami public ECR mirror instead:
+
+- `public.ecr.aws/bitnami/kafka:3.7.0`
+
+The Kafka service configuration is unchanged because it is still the Bitnami image family.
+
 ## Run the POC
 
 From `d:\my-projects\kafka-grafana-project`:
