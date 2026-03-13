@@ -45,6 +45,57 @@ Kafka(3 brokers) -> Kafka Exporter -> Prometheus -> Grafana
 - Docker Desktop (Windows)
 - Docker Compose v2
 
+## Sizing Guidance (4 GB RAM / 2 vCPU)
+
+Yes, VM hangs can happen with the full default stack on 4 GB RAM.
+
+Reason:
+- 3 Kafka brokers in KRaft mode
+- Prometheus + Grafana
+- plus Docker overhead and OS memory
+
+On small VMs this often causes memory pressure (swap thrash or OOM), which looks like a hang.
+
+## Low-Resource Mode (Recommended for 4 GB VMs)
+
+This repo includes a tuned single-broker compose file:
+
+- `docker-compose.low-resource.yml`
+
+Run:
+
+```powershell
+docker compose -f docker-compose.low-resource.yml up -d
+```
+
+What is reduced:
+- Kafka brokers: 3 -> 1
+- Kafka JVM heap capped (`-Xms256m -Xmx512m`)
+- Memory and CPU limits set for exporter/prometheus/grafana
+- Prometheus retention set to 24h
+
+This mode still demonstrates end-to-end metrics scraping and Grafana dashboards.
+
+## 3-Broker Capped Mode (Possible on 4 GB, Best-Effort)
+
+Yes, you can run 3 brokers by capping heap and service resources.
+
+Use:
+
+```powershell
+docker compose -f docker-compose.3broker-capped.yml up -d
+```
+
+What this mode changes:
+- 3 brokers kept for multi-node POC
+- Broker heap capped to `-Xms256m -Xmx384m`
+- CPU/memory limits for all services
+- Lower Kafka thread counts and short log retention
+
+Important caveat:
+- This is a best-effort fit for 4 GB and can still become unstable under high topic/partition count or heavy producer traffic.
+- If VM starts lagging, use `docker-compose.low-resource.yml` for reliable demo behavior.
+
 ## Image Registry Note (Important)
 
 Bitnami Kafka tags on Docker Hub may return `manifest unknown` for some versions/tags.
@@ -60,6 +111,12 @@ From `d:\my-projects\kafka-grafana-project`:
 
 ```powershell
 docker compose up -d
+```
+
+If your VM is 4 GB / 2 vCPU, prefer:
+
+```powershell
+docker compose -f docker-compose.low-resource.yml up -d
 ```
 
 Check containers:
@@ -118,6 +175,12 @@ Create a topic:
 
 ```powershell
 docker exec kafka-1 /opt/bitnami/kafka/bin/kafka-topics.sh --create --topic poc-topic --bootstrap-server kafka-1:9092 --partitions 6 --replication-factor 3
+```
+
+For low-resource mode (single broker), use replication factor 1:
+
+```powershell
+docker exec kafka-1 /opt/bitnami/kafka/bin/kafka-topics.sh --create --topic poc-topic --bootstrap-server kafka-1:9092 --partitions 3 --replication-factor 1
 ```
 
 Start producer (interactive):
